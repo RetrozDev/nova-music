@@ -17,12 +17,24 @@ String formatBytes(num bytes) {
 
 String friendlyDownloadError(Object e) {
   if (e is TimeoutException) {
-    return 'Téléchargement bloqué : réseau trop lent ou instable.';
+    return 'Téléchargement bloqué : réseau trop lent ou instable. Réessaie.';
   }
   final message = e.toString();
-  if (message.contains('403') ||
-      message.contains('VideoUnavailable') ||
-      message.contains('Unplayable')) {
+  if (message.contains('FileSystemException') ||
+      message.contains('No space left') ||
+      message.contains('Permission denied')) {
+    return 'Stockage plein ou inaccessible. Libère de l\'espace ou réessaie.';
+  }
+  if (message.contains('Stockage inaccessible')) {
+    return message;
+  }
+  if (message.contains('403')) {
+    return 'YouTube bloque les téléchargements depuis ce réseau (erreur 403). '
+        'Essaie en WiFi, sur une autre connexion, ou réessaie plus tard.';
+  }
+  if (message.contains('VideoUnavailable') ||
+      message.contains('Unplayable') ||
+      message.contains('416')) {
     return 'Ce titre ne peut pas être téléchargé pour le moment.';
   }
   return 'Échec du téléchargement : $message';

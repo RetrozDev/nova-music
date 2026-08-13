@@ -53,6 +53,19 @@ class DownloadService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Test d'écriture : vérifie que le stockage est réellement accessible
+      // avant de lancer le téléchargement (message clair si ce n'est pas le cas).
+      final writeTest = File(p.join(_library.musicDir, '.write_test'));
+      try {
+        await writeTest.writeAsString('ok', flush: true);
+        await writeTest.delete();
+      } catch (e) {
+        throw Exception(
+          'Stockage inaccessible (${e is FileSystemException ? e.message : e}). '
+          'Vérifie l\'espace disponible sur ton téléphone.',
+        );
+      }
+
       var resolved = await _yt.downloadStream(id);
       final filePath = p.join(_library.musicDir, '$id.${resolved.extension}');
       final file = File(filePath);
@@ -121,14 +134,14 @@ class DownloadService extends ChangeNotifier {
           break;
         } catch (e) {
           attempt++;
-          if (attempt >= 2) rethrow;
+          if (attempt >= 3) rethrow;
           try {
             if (await file.exists()) await file.delete();
           } catch (_) {}
           received = 0;
           lastBytes = 0;
           ema = 0;
-          await Future<void>.delayed(const Duration(milliseconds: 800));
+          await Future<void>.delayed(const Duration(seconds: 2));
           // URL fraîche (les liens YouTube expirent / peuvent être bloqués).
           resolved = await _yt.downloadStream(id);
         }

@@ -195,8 +195,9 @@ Future<void> showUpdateErrorDialog(
   );
 }
 
-/// Lance une vérification silencieuse au démarrage et propose la mise à jour
-/// si une version plus récente existe sur GitHub.
+/// Lance une vérification silencieuse au démarrage. Si une version plus
+/// récente existe, la mise à jour est **téléchargée automatiquement**, puis
+/// l'installation est proposée (Android exige toujours une confirmation).
 Future<void> autoCheckForUpdate(
   BuildContext context,
   UpdateService service,
@@ -207,7 +208,7 @@ Future<void> autoCheckForUpdate(
     if (update == null) return;
     if (service.isNewer(current, update.version)) {
       if (!context.mounted) return;
-      await showUpdateAvailableDialog(context, service, update, current);
+      await showUpdateProgressDialog(context, service, update);
     }
   } catch (_) {}
 }

@@ -1,0 +1,56 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore signing keystore (même clé que les builds locaux)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p "$HOME/.android"
+          echo "$KEYSTORE_B64" | base64 -d > "$HOME/.android/debug.keystore"
+          ls -la "$HOME/.android/"
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Read version from pubspec
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^version: *//p' pubspec.yaml | awk -F'+' '{print $1}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create / replace release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" "$APK" \
+            --title "Nova Music v${{ steps.version.outputs.version }} (auto)" \
+            --notes "Version publiée automatiquement par GitHub Actions depuis le push sur main. L'app la détectera et proposera la mise à jour."
