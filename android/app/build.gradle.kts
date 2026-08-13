@@ -31,6 +31,10 @@ android {
 
     buildTypes {
         release {
+            // R8 (minification/shrink) casse Jackson / youtubedl : désactivé
+            // pour garantir un fonctionnement fiable (l'app est déjà ~68 Mo).
+            isMinifyEnabled = false
+            isShrinkResources = false
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")

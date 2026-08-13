@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import androidx.core.content.FileProvider
 import com.ryanheise.audioservice.AudioServiceActivity
 import com.yausername.youtubedl_android.YoutubeDL
@@ -76,9 +77,19 @@ class MainActivity : AudioServiceActivity() {
             try {
                 YoutubeDL.getInstance().init(applicationContext)
                 ytdlInitDone = true
+                Log.i("NovaMusic", "yt-dlp initialized OK")
             } catch (t: Throwable) {
                 ytdlInitFailed = true
-                ytdlInitError = t.message ?: t.javaClass.simpleName
+                ytdlInitError = buildString {
+                    var cur: Throwable? = t
+                    while (cur != null) {
+                        append(cur.javaClass.simpleName)
+                        cur.message?.let { append(": ").append(it) }
+                        cur = cur.cause
+                        if (cur != null) append(" -> ")
+                    }
+                }
+                Log.e("NovaMusic", "yt-dlp init failed: $ytdlInitError", t)
             }
         }
         return ytdlInitDone
