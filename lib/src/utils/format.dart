@@ -39,3 +39,23 @@ String friendlyDownloadError(Object e) {
   }
   return 'Échec du téléchargement : $message';
 }
+
+String friendlyPlaybackError(Object raw) {
+  final m = raw.toString().toLowerCase();
+  if (m.contains('403') ||
+      m.contains('source error') ||
+      m.contains('unexpected status') ||
+      m.contains('response code') ||
+      m.contains('playback error')) {
+    return 'YouTube refuse de lire ce flux depuis ton réseau (bloqué). '
+        'Essaie un autre réseau (WiFi / données) ou un VPN.';
+  }
+  if (m.contains('unable to resolve host') ||
+      m.contains('unknown host') ||
+      m.contains('socketexception') ||
+      m.contains('failed to connect') ||
+      m.contains('connection refused')) {
+    return 'Réseau injoignable. Vérifie ta connexion internet.';
+  }
+  return 'Lecture impossible : $raw';
+}

@@ -23,6 +23,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -30,6 +34,13 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    packaging {
+        // Nécessaire pour que le binaire yt-dlp (python) puisse être extrait et exécuté.
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }
@@ -46,4 +57,7 @@ flutter {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    // yt-dlp embarqué : extraction des flux YouTube la plus robuste (POT,
+    // fallbacks de clients), comme SPYRE / Seal.
+    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
 }

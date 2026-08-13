@@ -142,12 +142,10 @@ class _ActiveDownloadTile extends StatelessWidget {
   }
 
   String _details() {
-    if (item.totalBytes > 0) {
-      final speed = item.speedBytesPerSec > 0
-          ? ' • ${formatBytes(item.speedBytesPerSec)}/s'
-          : '';
-      return '${formatBytes(item.receivedBytes)} / ${formatBytes(item.totalBytes)}$speed';
-    }
-    return formatBytes(item.receivedBytes);
+    if (item.totalBytes <= 0) return '';
+    final speed = item.speedBytesPerSec > 0
+        ? ' • ${formatBytes(item.speedBytesPerSec)}/s'
+        : '';
+    return '${formatBytes(item.receivedBytes)} / ${formatBytes(item.totalBytes)}$speed';
   }
 }

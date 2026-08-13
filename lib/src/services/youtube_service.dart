@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class ResolvedAudio {
@@ -13,6 +14,8 @@ class ResolvedAudio {
 }
 
 class YoutubeService {
+  static const _ytdl = MethodChannel('nova_music/ytdl');
+
   final _yt = YoutubeExplode();
   final _urlCache = <String, String>{};
   final _inFlight = <String, Future<String>>{};
@@ -22,16 +25,23 @@ class YoutubeService {
   Future<List<String>> suggestions(String query) =>
       _yt.search.getQuerySuggestions(query);
 
-  Future<String> streamUrl(String videoId) =>
-      _urlCache[videoId] != null
-          ? Future.value(_urlCache[videoId])
-          : _inFlight.putIfAbsent(videoId, () async {
-              final url = await _resolveUrl(videoId);
-              _urlCache[videoId] = url;
-              return url;
-            });
+  Future<String> streamUrl(String videoId) => _urlCache[videoId] != null
+      ? Future.value(_urlCache[videoId])
+      : _inFlight.putIfAbsent(videoId, () async {
+          final url = await _resolveUrl(videoId);
+          _urlCache[videoId] = url;
+          return url;
+        });
 
   Future<String> _resolveUrl(String videoId) async {
+    // 1) yt-dlp embarqué (robuste face aux blocages / anti-bot de YouTube).
+    try {
+      final url = await _ytdl
+          .invokeMethod<String>('streamUrl', videoId)
+          .timeout(const Duration(seconds: 30));
+      if (url != null && url.isNotEmpty) return url;
+    } catch (_) {}
+    // 2) Repli : youtube_explode (client iOS en priorité).
     final chosen = await _pickAudioStream(videoId);
     return chosen.url.toString();
   }
@@ -63,13 +73,18 @@ class YoutubeService {
   }
 
   /// Récupère un manifeste contenant de l'audio, avec timeout et repli sur
-  /// d'autres clients si le client par défaut est bloqué.
+  /// d'autres clients si le client préféré est bloqué.
+  ///
+  /// Le client `ios` (celui de l'app YouTube officielle) génère des URL
+  /// `c=IOS` qui sont généralement **moins restreintes** (streaming +
+  /// téléchargement) que les URL `c=ANDROID`, fréquemment bloquées par YouTube.
   Future<StreamManifest> _fetchManifest(String videoId) async {
     final attempts = <List<YoutubeApiClient>?>[
+      [YoutubeApiClient.ios],
       null,
       [
-        YoutubeApiClient.ios,
         YoutubeApiClient.androidVr,
+        YoutubeApiClient.androidSdkless,
         YoutubeApiClient.tv,
       ],
     ];

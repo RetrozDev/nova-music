@@ -31,6 +31,8 @@ class PlayerService extends ChangeNotifier {
   final StreamController<Duration?> _duration = StreamController.broadcast();
   final StreamController<Duration> _buffered = StreamController.broadcast();
   final StreamController<String> _errors = StreamController.broadcast();
+  final Set<String> _retriedIds = {};
+  int _queueBuildGen = 0;
 
   PlayerService(this._yt, this._library) {
     _player.currentIndexStream.listen((i) {
@@ -48,6 +50,7 @@ class PlayerService extends ChangeNotifier {
     _player.playbackEventStream.listen((event) {
       if (event.errorCode != null) {
         _errors.add(event.errorMessage ?? 'Erreur de lecture.');
+        _maybeRetryCurrent();
       }
     });
     _player.loopModeStream.listen((m) {
@@ -103,24 +106,22 @@ class PlayerService extends ChangeNotifier {
 
   // ---- Playback control ----
 
-  /// Plays a list of tracks starting at [index]. Streams are resolved lazily
-  /// (locally stored files first, then YouTube).
+  /// Plays a list of tracks starting at [index]. La piste demandée est résolue
+  /// immédiatement, les suivantes sont ajoutées en arrière-plan (les URL yt-dlp
+  /// prennent quelques secondes chacune).
   Future<void> playTracks(List<Track> tracks, {required int index}) async {
     if (tracks.isEmpty) return;
+    if (index < 0 || index >= tracks.length) index = 0;
     _preparing = true;
+    _queueBuildGen++;
     notifyListeners();
     try {
-      final items = await _resolveAll(tracks);
-      if (items.isEmpty) {
-        throw Exception('Impossible de lire ces pistes pour le moment.');
-      }
-      final startIndex = index < items.length ? index : 0;
-      _queue = items.map((e) => e.$2).toList();
-      await _player.setAudioSources(
-        items.map((e) => e.$1).toList(),
-        initialIndex: startIndex,
-      );
+      final currentTrack = tracks[index];
+      final uri = await resolveUri(currentTrack);
+      _queue = List.of(tracks);
+      await _player.setAudioSource(_sourceFor(currentTrack, uri));
       await _player.play();
+      unawaited(_buildQueue(tracks, index));
     } finally {
       _preparing = false;
       notifyListeners();
@@ -205,35 +206,34 @@ class PlayerService extends ChangeNotifier {
     return Uri.parse(url);
   }
 
-  Future<List<(AudioSource, Track)>> _resolveAll(List<Track> tracks) async {
-    final out = List<(AudioSource, Track)?>.filled(tracks.length, null);
-    const pool = 4;
-    var next = 0;
+  AudioSource _sourceFor(Track track, Uri uri) {
+    if (uri.scheme == 'http' || uri.scheme == 'https') {
+      return AudioSource.uri(
+        uri,
+        tag: _mediaItem(track),
+        headers: const {'User-Agent': kMediaUserAgent},
+      );
+    }
+    return AudioSource.uri(uri, tag: _mediaItem(track));
+  }
 
-    Future<void> worker() async {
-      while (true) {
-        final i = next++;
-        if (i >= tracks.length) break;
-        try {
-          final uri = await resolveUri(tracks[i]);
-          if (uri.scheme == 'http' || uri.scheme == 'https') {
-            out[i] = (AudioSource.uri(
-              uri,
-              tag: _mediaItem(tracks[i]),
-              headers: const {'User-Agent': kMediaUserAgent},
-            ), tracks[i]);
-          } else {
-            out[i] =
-                (AudioSource.uri(uri, tag: _mediaItem(tracks[i])), tracks[i]);
-          }
-        } catch (_) {
-          // Skip tracks whose stream could not be resolved.
-        }
+  /// Ajoute progressivement les pistes suivantes à la file (en arrière-plan).
+  Future<void> _buildQueue(List<Track> tracks, int startIndex) async {
+    final gen = ++_queueBuildGen;
+    final order = <Track>[
+      ...tracks.skip(startIndex + 1),
+      ...tracks.take(startIndex),
+    ];
+    for (final t in order) {
+      if (gen != _queueBuildGen) return;
+      try {
+        if (_player.sequence.length >= tracks.length) return;
+        final uri = await resolveUri(t);
+        await _player.addAudioSource(_sourceFor(t, uri));
+      } catch (_) {
+        // Piste impossible à résoudre : on continue.
       }
     }
-
-    await Future.wait(List.generate(pool, (_) => worker()));
-    return out.whereType<(AudioSource, Track)>().toList();
   }
 
   MediaItem _mediaItem(Track track) {
@@ -249,5 +249,29 @@ class PlayerService extends ChangeNotifier {
       duration: track.duration,
       artUri: art,
     );
+  }
+
+  /// Une seule tentative automatique : si la lecture échoue sur un titre en
+  /// streaming, on récupère une URL YouTube fraîche et on relance.
+  Future<void> _maybeRetryCurrent() async {
+    final track = current;
+    final idx = _index;
+    if (track == null || idx == null) return;
+    if (_retriedIds.contains(track.id)) return;
+    // Fichier local : pas de nouvelle URL possible.
+    if (_library.find(track.id) != null) return;
+    if (_queue.isEmpty) return;
+
+    _retriedIds.add(track.id);
+    _preparing = true;
+    notifyListeners();
+    try {
+      track.streamUri = null; // force une URL fraîche
+      await playTracks(_queue, index: idx);
+    } catch (_) {
+    } finally {
+      _preparing = false;
+      notifyListeners();
+    }
   }
 }
