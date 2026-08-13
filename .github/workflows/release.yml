@@ -44,12 +44,17 @@ jobs:
           VERSION=$(sed -n 's/^version: *//p' pubspec.yaml | awk -F'+' '{print $1}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Rename APK (nom propre)
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             "build/nova-music-v${{ steps.version.outputs.version }}.apk"
+
       - name: Create / replace release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
-          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APK="build/nova-music-v${{ steps.version.outputs.version }}.apk"
           gh release delete "$TAG" --yes --cleanup-tag || true
           gh release create "$TAG" "$APK" \
             --title "Nova Music v${{ steps.version.outputs.version }} (auto)" \
