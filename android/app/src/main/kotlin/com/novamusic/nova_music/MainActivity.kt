@@ -17,18 +17,18 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AudioServiceActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var progressSink: EventChannel.EventSink? = null
 
+    private val ytdlInitLatch = CountDownLatch(1)
+    @Volatile private var ytdlReady = false
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        try {
-            YoutubeDL.getInstance().init(applicationContext)
-        } catch (e: YoutubeDLException) {
-            // yt-dlp indisponible : les flux utiliseront le repli Dart.
-        }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "nova_music/installer")
             .setMethodCallHandler { call, result ->
@@ -58,6 +58,29 @@ class MainActivity : AudioServiceActivity() {
                     progressSink = null
                 }
             })
+    }
+
+    /// Initialise yt-dlp en arrière-plan (extraction du binaire python/yt-dlp),
+    /// jamais sur le thread principal (sinon ANR/crash au démarrage).
+    private fun ensureYoutubeDL() {
+        if (ytdlReady) return
+        Thread {
+            try {
+                YoutubeDL.getInstance().init(applicationContext)
+            } catch (t: Throwable) {
+                // yt-dlp indisponible → repli Dart (youtube_explode)
+            } finally {
+                ytdlReady = true
+                ytdlInitLatch.countDown()
+            }
+        }.start()
+    }
+
+    private fun waitYoutubeDL() {
+        try {
+            ytdlInitLatch.await(30, TimeUnit.SECONDS)
+        } catch (ignored: InterruptedException) {
+        }
     }
 
     // ---- Installation APK ----
@@ -132,6 +155,8 @@ class MainActivity : AudioServiceActivity() {
         }
         Thread {
             try {
+                ensureYoutubeDL()
+                waitYoutubeDL()
                 val url = "https://www.youtube.com/watch?v=$videoId"
                 val request = YoutubeDLRequest(url)
                 request.addOption("-f", "bestaudio[ext=m4a]/bestaudio/best")
@@ -170,6 +195,8 @@ class MainActivity : AudioServiceActivity() {
         }
         Thread {
             try {
+                ensureYoutubeDL()
+                waitYoutubeDL()
                 val url = "https://www.youtube.com/watch?v=$videoId"
                 val request = YoutubeDLRequest(url)
                 request.addOption("-f", "bestaudio[ext=m4a]/bestaudio/best")
