@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/player_service.dart';
 import '../services/theme_service.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
@@ -27,6 +28,25 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(autoCheckForUpdate(context, context.read<UpdateService>()));
+      _listenPlayerErrors();
+    });
+  }
+
+  void _listenPlayerErrors() {
+    final player = context.read<PlayerService>();
+    player.errorStream.listen((message) {
+      if (!mounted) return;
+      final track = player.current;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            track == null
+                ? 'Lecture impossible : $message'
+                : '« ${track.title} » : lecture impossible ($message). '
+                    'Vérifie ta connexion.',
+          ),
+        ),
+      );
     });
   }
 

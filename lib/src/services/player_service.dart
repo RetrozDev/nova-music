@@ -7,6 +7,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 
 import '../models/library_track.dart';
 import '../models/track.dart';
+import '../utils/constants.dart';
 import 'library_service.dart';
 import 'youtube_service.dart';
 
@@ -14,7 +15,9 @@ class PlayerService extends ChangeNotifier {
   final YoutubeService _yt;
   final LibraryService _library;
 
-  final AudioPlayer _player = AudioPlayer(maxSkipsOnError: 3);
+  // maxSkipsOnError: 0 → on NE saute PAS une piste qui échoue : on s'arrête
+  // et l'erreur est remontée (visible) au lieu d'un skip silencieux.
+  final AudioPlayer _player = AudioPlayer(maxSkipsOnError: 0);
 
   List<Track> _queue = [];
   int? _index;
@@ -27,6 +30,7 @@ class PlayerService extends ChangeNotifier {
   final StreamController<Duration> _position = StreamController.broadcast();
   final StreamController<Duration?> _duration = StreamController.broadcast();
   final StreamController<Duration> _buffered = StreamController.broadcast();
+  final StreamController<String> _errors = StreamController.broadcast();
 
   PlayerService(this._yt, this._library) {
     _player.currentIndexStream.listen((i) {
@@ -40,6 +44,11 @@ class PlayerService extends ChangeNotifier {
     _player.playerStateStream.listen((s) {
       _processing = s.processingState;
       notifyListeners();
+    });
+    _player.playbackEventStream.listen((event) {
+      if (event.errorCode != null) {
+        _errors.add(event.errorMessage ?? 'Erreur de lecture.');
+      }
     });
     _player.loopModeStream.listen((m) {
       _loopMode = m;
@@ -80,6 +89,7 @@ class PlayerService extends ChangeNotifier {
   Stream<Duration> get positionStream => _position.stream;
   Stream<Duration?> get durationStream => _duration.stream;
   Stream<Duration> get bufferedStream => _buffered.stream;
+  Stream<String> get errorStream => _errors.stream;
 
   /// Returns the locally cached artwork for [id], if it exists.
   File? localThumbnail(String id) {
@@ -167,6 +177,7 @@ class PlayerService extends ChangeNotifier {
     _position.close();
     _duration.close();
     _buffered.close();
+    _errors.close();
     super.dispose();
   }
 
@@ -205,7 +216,16 @@ class PlayerService extends ChangeNotifier {
         if (i >= tracks.length) break;
         try {
           final uri = await resolveUri(tracks[i]);
-          out[i] = (AudioSource.uri(uri, tag: _mediaItem(tracks[i])), tracks[i]);
+          if (uri.scheme == 'http' || uri.scheme == 'https') {
+            out[i] = (AudioSource.uri(
+              uri,
+              tag: _mediaItem(tracks[i]),
+              headers: const {'User-Agent': kMediaUserAgent},
+            ), tracks[i]);
+          } else {
+            out[i] =
+                (AudioSource.uri(uri, tag: _mediaItem(tracks[i])), tracks[i]);
+          }
         } catch (_) {
           // Skip tracks whose stream could not be resolved.
         }

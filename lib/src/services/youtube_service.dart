@@ -65,9 +65,13 @@ class YoutubeService {
   /// Récupère un manifeste contenant de l'audio, avec timeout et repli sur
   /// d'autres clients si le client par défaut est bloqué.
   Future<StreamManifest> _fetchManifest(String videoId) async {
-    const attempts = <List<YoutubeApiClient>?>[
+    final attempts = <List<YoutubeApiClient>?>[
       null,
-      [YoutubeApiClient.androidVr, YoutubeApiClient.tv],
+      [
+        YoutubeApiClient.ios,
+        YoutubeApiClient.androidVr,
+        YoutubeApiClient.tv,
+      ],
     ];
     Object? lastError;
     for (final clients in attempts) {

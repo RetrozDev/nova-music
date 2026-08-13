@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/library_track.dart';
 import '../models/track.dart';
+import '../utils/constants.dart';
 import 'library_service.dart';
 import 'youtube_service.dart';
 
@@ -86,6 +87,7 @@ class DownloadService extends ChangeNotifier {
         // lecture — plus tolérante que la requête de téléchargement complète.
         final request = http.Request('GET', resolved.url);
         request.headers['Range'] = 'bytes=0-';
+        request.headers['User-Agent'] = kMediaUserAgent;
         final response =
             await _http.send(request).timeout(const Duration(seconds: 30));
         if (response.statusCode != 200 && response.statusCode != 206) {
