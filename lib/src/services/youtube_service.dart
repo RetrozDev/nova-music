@@ -38,7 +38,7 @@ class YoutubeService {
     try {
       final url = await _ytdl
           .invokeMethod<String>('streamUrl', videoId)
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 60));
       if (url != null && url.isNotEmpty) return url;
     } catch (_) {}
     // 2) Repli : youtube_explode (client iOS en priorité).
