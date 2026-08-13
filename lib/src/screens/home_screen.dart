@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/theme_service.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/update_flow.dart';
 import 'library_screen.dart';
 import 'search_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,13 +32,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeService>();
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          SearchScreen(),
-          LibraryScreen(),
-        ],
+      body: KeyedSubtree(
+        key: ValueKey(theme.id),
+        child: IndexedStack(
+          index: _index,
+          children: const [
+            SearchScreen(),
+            LibraryScreen(),
+            SettingsScreen(),
+          ],
+        ),
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -60,6 +67,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 selectedIcon:
                     Icon(Icons.library_music_rounded, color: AppColors.secondary),
                 label: 'Bibliothèque',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined, color: AppColors.textSecondary),
+                selectedIcon:
+                    Icon(Icons.settings_rounded, color: AppColors.secondary),
+                label: 'Réglages',
               ),
             ],
           ),

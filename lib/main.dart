@@ -61,7 +61,6 @@ class NovaMusicApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeService>();
     return MaterialApp(
-      key: ValueKey(theme.id),
       title: 'Nova Music',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(theme.current),

@@ -10,8 +10,6 @@ import '../services/player_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
 import '../widgets/download_progress_panel.dart';
-import '../widgets/theme_sheet.dart';
-import '../widgets/update_sheet.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -35,18 +33,6 @@ class LibraryScreen extends StatelessWidget {
                   fontFamily: 'Outfit',
                 ),
               ),
-            ),
-            IconButton(
-              onPressed: () => showThemeSheet(context),
-              tooltip: 'Thème',
-              icon: Icon(Icons.palette_outlined,
-                  color: AppColors.textSecondary, size: 26),
-            ),
-            IconButton(
-              onPressed: () => showUpdateSheet(context),
-              tooltip: 'Mise à jour',
-              icon: Icon(Icons.update_rounded,
-                  color: AppColors.textSecondary, size: 26),
             ),
             if (tracks.isNotEmpty)
               IconButton(

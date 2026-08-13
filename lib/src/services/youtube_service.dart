@@ -1,12 +1,12 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-class ResolvedStream {
-  final Stream<List<int>> stream;
+class ResolvedAudio {
+  final Uri url;
   final String extension;
   final int sizeBytes;
 
-  const ResolvedStream({
-    required this.stream,
+  const ResolvedAudio({
+    required this.url,
     required this.extension,
     required this.sizeBytes,
   });
@@ -36,11 +36,10 @@ class YoutubeService {
     return chosen.url.toString();
   }
 
-  Future<ResolvedStream> downloadStream(String videoId) async {
+  Future<ResolvedAudio> downloadStream(String videoId) async {
     final chosen = await _pickAudioStream(videoId);
-    final stream = _yt.videos.streamsClient.get(chosen);
-    return ResolvedStream(
-      stream: stream,
+    return ResolvedAudio(
+      url: chosen.url,
       extension: chosen.container.name == 'mp4' ? 'm4a' : chosen.container.name,
       sizeBytes: chosen.size.totalBytes,
     );
@@ -79,7 +78,7 @@ class YoutubeService {
                     videoId,
                     ytClients: clients,
                   ))
-            .timeout(const Duration(seconds: 45));
+            .timeout(const Duration(seconds: 30));
         if (manifest.audioOnly.isNotEmpty) return manifest;
       } catch (e) {
         lastError = e;

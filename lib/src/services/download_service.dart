@@ -31,6 +31,7 @@ class ActiveDownload {
 class DownloadService extends ChangeNotifier {
   final YoutubeService _yt;
   final LibraryService _library;
+  final http.Client _http = http.Client();
 
   final Map<String, ActiveDownload> _active = {};
 
@@ -52,66 +53,92 @@ class DownloadService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _yt.downloadStream(id);
-      final fileName = '$id.${result.extension}';
-      final filePath = p.join(_library.musicDir, fileName);
+      var resolved = await _yt.downloadStream(id);
+      final filePath = p.join(_library.musicDir, '$id.${resolved.extension}');
       final file = File(filePath);
       if (await file.exists()) {
         try {
           await file.delete();
         } catch (_) {}
       }
-      final sink = file.openWrite();
 
       var received = 0;
       var lastBytes = 0;
       var lastTick = DateTime.now();
       var ema = 0.0;
+      var attempt = 0;
 
-      final timed = result.stream.timeout(
-        const Duration(seconds: 45),
-        onTimeout: (EventSink<List<int>> eventSink) => eventSink.addError(
-          TimeoutException(
-              'La connexion de téléchargement est restée bloquée.'),
-        ),
-      );
+      Future<void> fetch() async {
+        // Requête « streaming » (Range ouverte), comme celle utilisée pour la
+        // lecture — plus tolérante que la requête de téléchargement complète.
+        final request = http.Request('GET', resolved.url);
+        request.headers['Range'] = 'bytes=0-';
+        final response =
+            await _http.send(request).timeout(const Duration(seconds: 30));
+        if (response.statusCode != 200 && response.statusCode != 206) {
+          throw HttpException('HTTP ${response.statusCode}');
+        }
 
-      try {
-        await for (final chunk in timed) {
-          received += chunk.length;
-          sink.add(chunk);
+        final sink = file.openWrite();
+        final timed = response.stream.timeout(
+          const Duration(seconds: 20),
+          onTimeout: (EventSink<List<int>> eventSink) => eventSink.addError(
+            TimeoutException('flux gelé'),
+          ),
+        );
+        try {
+          await for (final chunk in timed) {
+            received += chunk.length;
+            sink.add(chunk);
 
-          final now = DateTime.now();
-          final dt = now.difference(lastTick).inMilliseconds;
-          if (dt >= 120) {
-            final instant = (received - lastBytes) * 1000 / dt;
-            ema = ema == 0 ? instant : ema * 0.6 + instant * 0.4;
-            lastBytes = received;
-            lastTick = now;
+            final now = DateTime.now();
+            final dt = now.difference(lastTick).inMilliseconds;
+            if (dt >= 120) {
+              final instant = (received - lastBytes) * 1000 / dt;
+              ema = ema == 0 ? instant : ema * 0.6 + instant * 0.4;
+              lastBytes = received;
+              lastTick = now;
+            }
+
+            _active[id] = ActiveDownload(
+              track: track,
+              receivedBytes: received,
+              totalBytes: resolved.sizeBytes,
+              speedBytesPerSec: ema,
+            );
+            notifyListeners();
           }
+          await sink.close();
+        } catch (_) {
+          await sink.close();
+          rethrow;
+        }
+      }
 
-          _active[id] = ActiveDownload(
-            track: track,
-            receivedBytes: received,
-            totalBytes: result.sizeBytes,
-            speedBytesPerSec: ema,
-          );
-          notifyListeners();
-        }
-        await sink.close();
-      } catch (_) {
-        await sink.close();
-        if (await file.exists()) {
+      while (true) {
+        try {
+          await fetch();
+          break;
+        } catch (e) {
+          attempt++;
+          if (attempt >= 2) rethrow;
           try {
-            await file.delete();
+            if (await file.exists()) await file.delete();
           } catch (_) {}
+          received = 0;
+          lastBytes = 0;
+          ema = 0;
+          await Future<void>.delayed(const Duration(milliseconds: 800));
+          // URL fraîche (les liens YouTube expirent / peuvent être bloqués).
+          resolved = await _yt.downloadStream(id);
         }
-        rethrow;
       }
 
       final thumbnailPath = p.join(_library.musicDir, '$id.jpg');
       try {
-        final response = await http.get(Uri.parse(track.thumbnailUrl));
+        final response = await _http
+            .get(Uri.parse(track.thumbnailUrl))
+            .timeout(const Duration(seconds: 15));
         if (response.statusCode == 200) {
           await File(thumbnailPath).writeAsBytes(response.bodyBytes, flush: true);
         }
