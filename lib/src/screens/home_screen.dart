@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
             indicatorColor: AppColors.primary.withValues(alpha: 0.35),
             height: 66,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: const [
+            destinations: [
               NavigationDestination(
                 icon: Icon(Icons.search_rounded, color: AppColors.textSecondary),
                 selectedIcon: Icon(Icons.search_rounded, color: AppColors.secondary),

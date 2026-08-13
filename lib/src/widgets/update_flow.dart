@@ -18,16 +18,16 @@ Future<void> showUpdateAvailableDialog(
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      icon: const Icon(Icons.system_update_alt_rounded,
+      icon: Icon(Icons.system_update_alt_rounded,
           color: AppColors.secondary, size: 36),
-      title: const Text(
+      title: Text(
         'Mise à jour disponible',
         style: TextStyle(color: AppColors.textPrimary),
       ),
       content: Text(
         'La version ${update.version} est prête (tu es en v$currentVersion). '
         'Télécharger et installer maintenant ?',
-        style: const TextStyle(color: AppColors.textSecondary),
+        style: TextStyle(color: AppColors.textSecondary),
       ),
       actions: [
         TextButton(
@@ -67,7 +67,7 @@ Future<bool> showUpdateProgressDialog(
       child: AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'Téléchargement…',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textPrimary),
@@ -84,7 +84,7 @@ Future<bool> showUpdateProgressDialog(
                   minHeight: 8,
                   backgroundColor: Colors.white.withValues(alpha: 0.12),
                   valueColor:
-                      const AlwaysStoppedAnimation(AppColors.secondary),
+                      AlwaysStoppedAnimation(AppColors.secondary),
                 ),
               ),
             ),
@@ -94,7 +94,7 @@ Future<bool> showUpdateProgressDialog(
               builder: (_, value, _) => Text(
                 value,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
@@ -127,12 +127,12 @@ Future<bool> showUpdateProgressDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: const Icon(Icons.check_circle_rounded,
             color: Colors.greenAccent, size: 36),
-        title: const Text(
+        title: Text(
           'Mise à jour installée',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textPrimary),
         ),
-        content: const Text(
+        content: Text(
           'Confirme l\'installation dans la fenêtre Android, puis reviens '
           'dans Nova Music : tout sera mis à jour, sans rien perdre.',
           textAlign: TextAlign.center,
@@ -167,7 +167,7 @@ Future<void> showUpdateErrorDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       icon: const Icon(Icons.error_outline_rounded,
           color: Colors.redAccent, size: 36),
-      title: const Text(
+      title: Text(
         'Mise à jour impossible',
         textAlign: TextAlign.center,
         style: TextStyle(color: AppColors.textPrimary),
@@ -175,7 +175,7 @@ Future<void> showUpdateErrorDialog(
       content: Text(
         message ?? 'Une erreur est survenue.',
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppColors.textSecondary),
+        style: TextStyle(color: AppColors.textSecondary),
       ),
       actions: [
         TextButton(

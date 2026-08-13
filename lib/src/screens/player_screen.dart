@@ -75,10 +75,10 @@ class _TopBar extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+          icon: Icon(Icons.keyboard_arrow_down_rounded,
               color: AppColors.textPrimary, size: 30),
         ),
-        const Expanded(
+        Expanded(
           child: Text(
             'En cours de lecture',
             textAlign: TextAlign.center,
@@ -117,7 +117,7 @@ class _TopBar extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Échec du téléchargement : $e')),
+        SnackBar(content: Text(friendlyDownloadError(e))),
       );
     }
   }
@@ -138,7 +138,7 @@ class _ArtworkBackground extends StatelessWidget {
             fit: BoxFit.cover,
             width: double.infinity,
             errorWidget: (_, _, _) => Container(
-              decoration: const BoxDecoration(gradient: AppColors.gradient),
+              decoration: BoxDecoration(gradient: AppColors.gradient),
             ),
           );
     return Stack(
@@ -179,11 +179,11 @@ class _Artwork extends StatelessWidget {
         : CachedNetworkImage(
             imageUrl: artUri,
             fit: BoxFit.cover,
-            placeholder: (_, _) => const Center(
+            placeholder: (_, _) => Center(
               child: CircularProgressIndicator(color: AppColors.secondary),
             ),
             errorWidget: (_, _, _) => Container(
-              decoration: const BoxDecoration(gradient: AppColors.gradient),
+              decoration: BoxDecoration(gradient: AppColors.gradient),
               child: const Icon(Icons.music_note,
                   size: 80, color: Colors.white70),
             ),
@@ -222,7 +222,7 @@ class _TrackInfo extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -233,7 +233,7 @@ class _TrackInfo extends StatelessWidget {
           artist,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             color: AppColors.textSecondary,
           ),
@@ -302,7 +302,7 @@ class _SeekBar extends StatelessWidget {
     );
   }
 
-  static const _timeStyle = TextStyle(
+  static final _timeStyle = TextStyle(
     fontSize: 12,
     color: AppColors.textSecondary,
     fontFeatures: [FontFeature.tabularFigures()],
@@ -331,13 +331,13 @@ class _Controls extends StatelessWidget {
         ),
         IconButton(
           onPressed: player.previous,
-          icon: const Icon(Icons.skip_previous_rounded,
+          icon: Icon(Icons.skip_previous_rounded,
               color: AppColors.textPrimary, size: 40),
         ),
         _PlayPauseButton(player: player),
         IconButton(
           onPressed: player.next,
-          icon: const Icon(Icons.skip_next_rounded,
+          icon: Icon(Icons.skip_next_rounded,
               color: AppColors.textPrimary, size: 40),
         ),
         _LoopButton(player: player),
@@ -354,7 +354,7 @@ class _PlayPauseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (player.isPreparing) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(18),
         child: SizedBox(
           width: 36,
@@ -428,12 +428,12 @@ class _QueueButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.queue_music_rounded,
+            Icon(Icons.queue_music_rounded,
                 color: AppColors.textSecondary, size: 20),
             const SizedBox(width: 8),
             Text(
               'File d\'attente (${player.queue.length})',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -468,7 +468,7 @@ class _QueueButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'File d\'attente',
@@ -488,9 +488,9 @@ class _QueueButton extends StatelessWidget {
                     final active = i == p.index;
                     return ListTile(
                       leading: active
-                          ? const Icon(Icons.graphic_eq,
+                          ? Icon(Icons.graphic_eq,
                               color: AppColors.secondary)
-                          : const Icon(Icons.music_note,
+                          : Icon(Icons.music_note,
                               color: AppColors.textSecondary),
                       title: Text(
                         t.title,

@@ -10,6 +10,7 @@ import '../services/library_service.dart';
 import '../services/player_service.dart';
 import '../services/youtube_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/format.dart';
 import '../widgets/download_progress_panel.dart';
 import '../widgets/track_card.dart';
 
@@ -167,7 +168,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Échec du téléchargement : $e')),
+        SnackBar(content: Text(friendlyDownloadError(e))),
       );
     }
   }
@@ -190,7 +191,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   fontFamily: 'Outfit',
                 ),
               ),
-              const Text(
+              Text(
                 'Recherche, écoute, télécharge.',
                 style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
@@ -219,7 +220,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.secondary),
       );
     }
@@ -242,7 +243,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
     if (_results.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Aucun résultat',
           style: TextStyle(color: AppColors.textSecondary),
@@ -282,17 +283,17 @@ class _SearchBar extends StatelessWidget {
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
       onSubmitted: onSubmitted,
-      style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+      style: TextStyle(fontSize: 15, color: AppColors.textPrimary),
       cursorColor: AppColors.secondary,
       decoration: InputDecoration(
         hintText: 'Artiste, titre, genre…',
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
-        prefixIcon: const Icon(Icons.search_rounded,
+        hintStyle: TextStyle(color: AppColors.textSecondary),
+        prefixIcon: Icon(Icons.search_rounded,
             color: AppColors.textSecondary),
         suffixIcon: hasQuery
             ? IconButton(
                 onPressed: onClear,
-                icon: const Icon(Icons.close_rounded,
+                icon: Icon(Icons.close_rounded,
                     color: AppColors.textSecondary),
               )
             : null,
@@ -306,7 +307,7 @@ class _SearchBar extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide:
-              const BorderSide(color: AppColors.primary, width: 1.5),
+              BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );
@@ -349,7 +350,7 @@ class _Discover extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Trouver une vibe',
           style: TextStyle(
             fontSize: 16,
@@ -365,7 +366,7 @@ class _Discover extends StatelessWidget {
               .map(
                 (c) => ActionChip(
                   label: Text(c),
-                  labelStyle: const TextStyle(
+                  labelStyle: TextStyle(
                       fontSize: 13, color: AppColors.textPrimary),
                   backgroundColor: AppColors.surface,
                   side: BorderSide(
@@ -398,11 +399,11 @@ class _Suggestions extends StatelessWidget {
         final s = suggestions[i];
         return ListTile(
           dense: true,
-          leading: const Icon(Icons.history_rounded,
+          leading: Icon(Icons.history_rounded,
               color: AppColors.textSecondary, size: 20),
           title: Text(
             s,
-            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
           ),
           onTap: () => onSelected(s),
         );
@@ -437,7 +438,7 @@ class _ResultsList extends StatelessWidget {
       itemBuilder: (context, i) {
         if (i == results.length) {
           if (nextPage == null) return const SizedBox(height: 8);
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(16),
             child: Center(
               child: SizedBox(
@@ -518,13 +519,13 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
+            Icon(Icons.cloud_off_rounded,
                 size: 56, color: AppColors.textSecondary),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(

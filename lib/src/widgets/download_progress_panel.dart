@@ -24,12 +24,12 @@ class DownloadProgressPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
           child: Row(
             children: [
-              const Icon(Icons.downloading_rounded,
+              Icon(Icons.downloading_rounded,
                   size: 18, color: AppColors.secondary),
               const SizedBox(width: 6),
               Text(
                 'Téléchargements en cours (${active.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -80,7 +80,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorWidget: (_, _, _) => Container(
                   color: AppColors.surfaceAlt,
-                  child: const Icon(Icons.music_note,
+                  child: Icon(Icons.music_note,
                       color: AppColors.textSecondary),
                 ),
               ),
@@ -95,7 +95,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                   item.track.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -109,7 +109,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                     minHeight: 6,
                     backgroundColor: Colors.white.withValues(alpha: 0.12),
                     valueColor:
-                        const AlwaysStoppedAnimation(AppColors.secondary),
+                        AlwaysStoppedAnimation(AppColors.secondary),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -119,7 +119,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                       percent == null
                           ? 'Téléchargement…'
                           : '$percent%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.secondary,
@@ -128,7 +128,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                     const Spacer(),
                     Text(
                       _details(),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ],

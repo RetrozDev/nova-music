@@ -71,7 +71,7 @@ class MiniPlayer extends StatelessWidget {
                           track.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
@@ -82,7 +82,7 @@ class MiniPlayer extends StatelessWidget {
                           track.artist,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -91,7 +91,7 @@ class MiniPlayer extends StatelessWidget {
                     ),
                   ),
                   if (player.isPreparing)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(12),
                       child: SizedBox(
                         width: 20,
@@ -114,7 +114,7 @@ class MiniPlayer extends StatelessWidget {
                       onPressed: () => player.toggle(),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.skip_next_rounded,
                         color: AppColors.textPrimary,
                         size: 28,
@@ -156,7 +156,7 @@ class _ProgressLine extends StatelessWidget {
               value: fraction,
               minHeight: 3,
               backgroundColor: Colors.transparent,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
             );
           },
         );
@@ -172,7 +172,7 @@ class _Placeholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.surfaceAlt,
-      child: const Icon(Icons.music_note, color: AppColors.textSecondary),
+      child: Icon(Icons.music_note, color: AppColors.textSecondary),
     );
   }
 }

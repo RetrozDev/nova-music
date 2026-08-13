@@ -10,6 +10,7 @@ import '../services/player_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
 import '../widgets/download_progress_panel.dart';
+import '../widgets/theme_sheet.dart';
 import '../widgets/update_sheet.dart';
 
 class LibraryScreen extends StatelessWidget {
@@ -36,16 +37,22 @@ class LibraryScreen extends StatelessWidget {
               ),
             ),
             IconButton(
+              onPressed: () => showThemeSheet(context),
+              tooltip: 'Thème',
+              icon: Icon(Icons.palette_outlined,
+                  color: AppColors.textSecondary, size: 26),
+            ),
+            IconButton(
               onPressed: () => showUpdateSheet(context),
               tooltip: 'Mise à jour',
-              icon: const Icon(Icons.update_rounded,
+              icon: Icon(Icons.update_rounded,
                   color: AppColors.textSecondary, size: 26),
             ),
             if (tracks.isNotEmpty)
               IconButton(
                 onPressed: () => _playAll(context, tracks),
                 tooltip: 'Tout lire',
-                icon: const Icon(Icons.play_circle_fill_rounded,
+                icon: Icon(Icons.play_circle_fill_rounded,
                     color: AppColors.secondary, size: 34),
               ),
           ],
@@ -54,7 +61,7 @@ class LibraryScreen extends StatelessWidget {
           tracks.isEmpty
               ? 'Aucun téléchargement'
               : '${tracks.length} titre${tracks.length > 1 ? 's' : ''} disponible${tracks.length > 1 ? 's' : ''} hors-ligne',
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
 
@@ -105,13 +112,13 @@ class LibraryScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'Supprimer ce titre ?',
           style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           '« ${track.title} » sera retiré de ton appareil.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -143,7 +150,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
@@ -214,7 +221,7 @@ class _LibraryTile extends StatelessWidget {
                         track.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -223,7 +230,7 @@ class _LibraryTile extends StatelessWidget {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          const Icon(Icons.offline_pin_rounded,
+                          Icon(Icons.offline_pin_rounded,
                               size: 13, color: AppColors.secondary),
                           const SizedBox(width: 4),
                           Flexible(
@@ -231,7 +238,7 @@ class _LibraryTile extends StatelessWidget {
                               track.artist,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.textSecondary,
                               ),
@@ -245,7 +252,7 @@ class _LibraryTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   formatDuration(Duration(milliseconds: track.durationMs)),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(width: 4),
@@ -253,7 +260,7 @@ class _LibraryTile extends StatelessWidget {
                   onPressed: onDelete,
                   iconSize: 20,
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.delete_outline_rounded,
+                  icon: Icon(Icons.delete_outline_rounded,
                       color: AppColors.textSecondary),
                 ),
               ],
@@ -272,7 +279,7 @@ class _ThumbFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.surfaceAlt,
-      child: const Icon(Icons.music_note, color: AppColors.textSecondary),
+      child: Icon(Icons.music_note, color: AppColors.textSecondary),
     );
   }
 }
@@ -289,7 +296,7 @@ class _EmptyLibrary extends StatelessWidget {
           Container(
             width: 110,
             height: 110,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppColors.gradientSoft,
             ),
@@ -297,7 +304,7 @@ class _EmptyLibrary extends StatelessWidget {
                 size: 54, color: Colors.white),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Ta bibliothèque est vide',
             style: TextStyle(
               fontSize: 19,
@@ -306,7 +313,7 @@ class _EmptyLibrary extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               'Recherche ta musique préférée et télécharge-la : elle sera disponible ici, même sans internet.',

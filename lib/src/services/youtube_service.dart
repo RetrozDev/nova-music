@@ -47,7 +47,7 @@ class YoutubeService {
   }
 
   Future<AudioOnlyStreamInfo> _pickAudioStream(String videoId) async {
-    final manifest = await _yt.videos.streamsClient.getManifest(videoId);
+    final manifest = await _fetchManifest(videoId);
     final audio = manifest.audioOnly.toList();
     if (audio.isEmpty) {
       throw Exception('Aucun flux audio disponible pour cette vidéo.');
@@ -61,6 +61,34 @@ class YoutubeService {
       (a, b) =>
           a.bitrate.bitsPerSecond >= b.bitrate.bitsPerSecond ? a : b,
     );
+  }
+
+  /// Récupère un manifeste contenant de l'audio, avec timeout et repli sur
+  /// d'autres clients si le client par défaut est bloqué.
+  Future<StreamManifest> _fetchManifest(String videoId) async {
+    const attempts = <List<YoutubeApiClient>?>[
+      null,
+      [YoutubeApiClient.androidVr, YoutubeApiClient.tv],
+    ];
+    Object? lastError;
+    for (final clients in attempts) {
+      try {
+        final manifest = await (clients == null
+                ? _yt.videos.streamsClient.getManifest(videoId)
+                : _yt.videos.streamsClient.getManifest(
+                    videoId,
+                    ytClients: clients,
+                  ))
+            .timeout(const Duration(seconds: 45));
+        if (manifest.audioOnly.isNotEmpty) return manifest;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null && lastError is Exception) {
+      throw lastError;
+    }
+    throw Exception('Aucun flux audio disponible pour cette vidéo.');
   }
 
   void dispose() => _yt.close();

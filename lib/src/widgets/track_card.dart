@@ -58,7 +58,7 @@ class TrackCard extends StatelessWidget {
                         track.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -69,7 +69,7 @@ class TrackCard extends StatelessWidget {
                         track.artist,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                         ),
@@ -83,7 +83,7 @@ class TrackCard extends StatelessWidget {
                   children: [
                     Text(
                       formatDuration(track.duration),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -107,7 +107,7 @@ class TrackCard extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         tooltip: 'Télécharger',
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.download_outlined,
                           color: AppColors.secondary,
                         ),
@@ -133,7 +133,7 @@ class _Thumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final placeholder = Container(
       color: AppColors.surfaceAlt,
-      child: const Icon(Icons.music_note, color: AppColors.textSecondary),
+      child: Icon(Icons.music_note, color: AppColors.textSecondary),
     );
 
     final image = (path != null && path!.isNotEmpty)

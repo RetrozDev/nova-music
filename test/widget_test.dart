@@ -7,7 +7,7 @@ void main() {
   testWidgets('Theme builds without errors', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark(),
+        theme: AppTheme.build(kThemePalettes.first),
         home: const Scaffold(body: SizedBox()),
       ),
     );

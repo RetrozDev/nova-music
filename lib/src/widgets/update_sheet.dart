@@ -108,7 +108,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Nova Music',
                       style: TextStyle(
                         fontSize: 20,
@@ -119,7 +119,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
                     ),
                     Text(
                       _current.isEmpty ? '…' : 'Version $_current',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
@@ -159,7 +159,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
                   ),
                   onPressed: _checking ? null : _check,
                   icon: _checking
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
@@ -176,7 +176,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
                 ),
               ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Les mises à jour s\'installent par-dessus la version actuelle : '
               'pas besoin de désinstaller, tes téléchargements sont conservés.',
               style: TextStyle(
@@ -193,7 +193,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
 
   Widget _statusArea() {
     if (_checking) {
-      return const Row(
+      return Row(
         children: [
           SizedBox(
             width: 20,
@@ -212,12 +212,12 @@ class _UpdateSheetState extends State<UpdateSheet> {
     if (_update != null) {
       return Row(
         children: [
-          const Icon(Icons.download_rounded, color: AppColors.secondary),
+          Icon(Icons.download_rounded, color: AppColors.secondary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Nouvelle version ${_update!.version} disponible 🚀',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -228,7 +228,7 @@ class _UpdateSheetState extends State<UpdateSheet> {
       );
     }
     if (_upToDate) {
-      return const Row(
+      return Row(
         children: [
           Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
           SizedBox(width: 10),
@@ -251,14 +251,14 @@ class _UpdateSheetState extends State<UpdateSheet> {
           Expanded(
             child: Text(
               _error!,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13, color: AppColors.textSecondary),
             ),
           ),
         ],
       );
     }
-    return const Text(
+    return Text(
       'Reste à jour pour profiter des dernières nouveautés.',
       style: TextStyle(color: AppColors.textSecondary),
     );

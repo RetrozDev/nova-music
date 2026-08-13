@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -55,6 +56,11 @@ class DownloadService extends ChangeNotifier {
       final fileName = '$id.${result.extension}';
       final filePath = p.join(_library.musicDir, fileName);
       final file = File(filePath);
+      if (await file.exists()) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
       final sink = file.openWrite();
 
       var received = 0;
@@ -62,8 +68,16 @@ class DownloadService extends ChangeNotifier {
       var lastTick = DateTime.now();
       var ema = 0.0;
 
+      final timed = result.stream.timeout(
+        const Duration(seconds: 45),
+        onTimeout: (EventSink<List<int>> eventSink) => eventSink.addError(
+          TimeoutException(
+              'La connexion de téléchargement est restée bloquée.'),
+        ),
+      );
+
       try {
-        await for (final chunk in result.stream) {
+        await for (final chunk in timed) {
           received += chunk.length;
           sink.add(chunk);
 
@@ -87,6 +101,11 @@ class DownloadService extends ChangeNotifier {
         await sink.close();
       } catch (_) {
         await sink.close();
+        if (await file.exists()) {
+          try {
+            await file.delete();
+          } catch (_) {}
+        }
         rethrow;
       }
 

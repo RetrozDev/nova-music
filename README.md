@@ -10,6 +10,7 @@ Application Android qui permet de **rechercher de la musique**, de l'**écouter 
 - 🎼 **Bibliothèque** : tes téléchargements, avec pochettes et lecture hors-ligne.
 - 🎛️ **Lecteur plein écran** : contrôle de la file d'attente, boucle, lecture aléatoire.
 - 🔔 **Lecture en arrière-plan** : notification de contrôle + écoute même écran éteint.
+- 🎨 **7 thèmes personnalisables** : choisis ton ambiance (Nova, Océan, Émeraude, Feu, Néon, Nuit, Ambre) — ton choix est conservé.
 - 🔄 **Mise à jour automatique** : l'app détecte les nouvelles versions publiées ici et s'installe **par-dessus**, sans désinstaller ni perdre tes téléchargements.
 
 ## Télécharger
