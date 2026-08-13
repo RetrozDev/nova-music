@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../models/library_track.dart';
 import '../models/track.dart';
 import '../utils/constants.dart';
+import '../utils/format.dart';
 import 'library_service.dart';
 import 'youtube_service.dart';
 
@@ -18,6 +19,7 @@ class ActiveDownload {
   final int receivedBytes;
   final int totalBytes;
   final double speedBytesPerSec;
+  final String? status;
 
   const ActiveDownload({
     required this.track,
@@ -25,6 +27,7 @@ class ActiveDownload {
     this.receivedBytes = 0,
     this.totalBytes = 0,
     this.speedBytesPerSec = 0,
+    this.status,
   });
 
   double? get fraction {
@@ -55,15 +58,39 @@ class DownloadService extends ChangeNotifier {
   void _onProgressEvent(Object? event) {
     if (event is! Map) return;
     final id = event['id'];
-    final percent = event['percent'];
-    if (id is! String || percent is! num) return;
+    if (id is! String) return;
     final prev = _active[id];
     if (prev == null) return;
-    _active[id] = ActiveDownload(
-      track: prev.track,
-      percent: percent.toDouble(),
-    );
-    notifyListeners();
+    final type = event['type'] ?? 'progress';
+    if (type == 'progress') {
+      final percent = event['percent'];
+      if (percent is num) {
+        _active[id] = ActiveDownload(
+          track: prev.track,
+          percent: percent.toDouble(),
+          status: prev.status,
+        );
+        notifyListeners();
+      }
+    } else if (type == 'log') {
+      final line = event['line'];
+      if (line is String) {
+        _active[id] = ActiveDownload(
+          track: prev.track,
+          percent: prev.percent,
+          status: line,
+        );
+        notifyListeners();
+      }
+    } else if (type == 'error') {
+      final msg = event['message'];
+      _active[id] = ActiveDownload(
+        track: prev.track,
+        percent: prev.percent,
+        status: 'Erreur : ${msg ?? 'yt-dlp'}',
+      );
+      notifyListeners();
+    }
   }
 
   Future<void> download(Track track) async {
@@ -87,9 +114,16 @@ class DownloadService extends ChangeNotifier {
       }
 
       // 1) yt-dlp natif (téléchargement robuste + progression en %).
-      var filePath = await _nativeDownload(id);
+      final native = await _nativeDownload(id);
+      var filePath = native.path;
       // 2) Repli : téléchargement HTTP à partir de l'URL du flux.
-      filePath ??= await _httpDownload(track);
+      if (filePath == null) {
+        try {
+          filePath = await _httpDownload(track);
+        } catch (e) {
+          throw Exception(native.error ?? friendlyDownloadError(e));
+        }
+      }
 
       final thumbnailPath = p.join(_library.musicDir, '$id.jpg');
       try {
@@ -116,18 +150,25 @@ class DownloadService extends ChangeNotifier {
     }
   }
 
-  Future<String?> _nativeDownload(String id) async {
+  Future<({String? path, String? error})> _nativeDownload(String id) async {
     final outputPath = p.join(_library.musicDir, id);
     try {
       final path = await _ytdl
           .invokeMethod<String>('download', {
         'videoId': id,
         'outputPath': outputPath,
-      }).timeout(const Duration(minutes: 10));
-      if (path == null || path.isEmpty) return null;
-      return await File(path).exists() ? path : null;
+      }).timeout(const Duration(minutes: 6));
+      if (path == null || path.isEmpty) {
+        return (path: null, error: 'yt-dlp n\'a pas produit de fichier.');
+      }
+      return (path: await File(path).exists() ? path : null, error: null);
+    } on PlatformException catch (e) {
+      return (path: null, error: e.message ?? 'Échec de yt-dlp.');
     } catch (_) {
-      return null;
+      return (
+        path: null,
+        error: 'Téléchargement yt-dlp trop long (réseau bloqué ?).',
+      );
     }
   }
 

@@ -116,9 +116,7 @@ class _ActiveDownloadTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      percent == null
-                          ? 'Téléchargement…'
-                          : '$percent%',
+                      percent == null ? 'Préparation…' : '$percent%',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -133,6 +131,20 @@ class _ActiveDownloadTile extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (item.status != null && item.status!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    item.status!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: item.status!.startsWith('Erreur')
+                          ? Colors.redAccent
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

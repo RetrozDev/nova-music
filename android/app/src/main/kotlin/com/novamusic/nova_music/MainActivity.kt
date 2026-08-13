@@ -162,6 +162,8 @@ class MainActivity : AudioServiceActivity() {
                 request.addOption("-f", "bestaudio[ext=m4a]/bestaudio/best")
                 request.addOption("--no-playlist")
                 request.addOption("--no-warnings")
+                request.addOption("--socket-timeout", "20")
+                request.addOption("--retries", "2")
                 val info: VideoInfo = YoutubeDL.getInstance().getInfo(request)
                 val streamUrl = info.url
                 mainHandler.post {
@@ -203,20 +205,32 @@ class MainActivity : AudioServiceActivity() {
                 request.addOption("--no-playlist")
                 request.addOption("--no-warnings")
                 request.addOption("--no-mtime")
+                request.addOption("--socket-timeout", "20")
+                request.addOption("--retries", "2")
                 request.addOption("-o", "$outputPath.%(ext)s")
 
                 YoutubeDL.getInstance().execute(
                     request,
                     "nova_music_$videoId"
-                ) { progress, _, _ ->
+                ) { progress, _, line ->
                     val percent = if (progress == null || progress.isNaN()) 0f else progress
                     mainHandler.post {
                         progressSink?.success(
                             mapOf(
                                 "id" to videoId,
+                                "type" to "progress",
                                 "percent" to percent,
                             )
                         )
+                        if (!line.isNullOrBlank()) {
+                            progressSink?.success(
+                                mapOf(
+                                    "id" to videoId,
+                                    "type" to "log",
+                                    "line" to line,
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -239,8 +253,16 @@ class MainActivity : AudioServiceActivity() {
                     }
                 }
             } catch (e: Exception) {
+                val message = e.message ?: "yt-dlp a échoué"
                 mainHandler.post {
-                    result.error("ytdl_failed", e.message ?: "yt-dlp a échoué", null)
+                    progressSink?.success(
+                        mapOf(
+                            "id" to videoId,
+                            "type" to "error",
+                            "message" to message,
+                        )
+                    )
+                    result.error("ytdl_failed", message, null)
                 }
             }
         }.start()
