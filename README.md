@@ -6,14 +6,17 @@ Application Android qui permet de **rechercher de la musique**, de l'**écouter 
 
 - 🔍 **Recherche** : cherche des musiques par titre, artiste ou genre (YouTube).
 - ▶️ **Lecture en streaming sans publicité** : écoute directe dès que tu as internet.
-- ⬇️ **Téléchargement** : enregistre tes sons pour les écouter **sans connexion**.
+- ⬇️ **Téléchargement** avec vraie barre de progression, pourcentage et vitesse.
 - 🎼 **Bibliothèque** : tes téléchargements, avec pochettes et lecture hors-ligne.
 - 🎛️ **Lecteur plein écran** : contrôle de la file d'attente, boucle, lecture aléatoire.
 - 🔔 **Lecture en arrière-plan** : notification de contrôle + écoute même écran éteint.
+- 🔄 **Mise à jour automatique** : l'app détecte les nouvelles versions publiées ici et s'installe **par-dessus**, sans désinstaller ni perdre tes téléchargements.
 
 ## Télécharger
 
 L'APK prêt à installer est disponible dans les **[Releases](https://github.com/RetrozDev/nova-music/releases)** de ce dépôt.
+
+**Mises à jour** : installe la dernière version, puis l'app te proposera automatiquement les suivantes (bouton « Mise à jour » dans Bibliothèque, ou notification au lancement).
 
 ## Construire depuis les sources
 

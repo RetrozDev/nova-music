@@ -6,8 +6,9 @@ String formatDuration(Duration? d) {
   return h > 0 ? '$h:$m:$s' : '$m:$s';
 }
 
-String formatBytes(int bytes) {
-  if (bytes < 1024) return '$bytes o';
-  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} Ko';
-  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+String formatBytes(num bytes) {
+  final b = bytes.toDouble();
+  if (b < 1024) return '${b.round()} o';
+  if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(1)} Ko';
+  return '${(b / (1024 * 1024)).toStringAsFixed(1)} Mo';
 }

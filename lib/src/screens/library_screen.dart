@@ -1,16 +1,16 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart'
-    hide DownloadProgress;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/library_track.dart';
-import '../services/download_service.dart';
 import '../services/library_service.dart';
 import '../services/player_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
+import '../widgets/download_progress_panel.dart';
+import '../widgets/update_sheet.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -18,9 +18,7 @@ class LibraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryService>();
-    final download = context.watch<DownloadService>();
     final tracks = library.tracks;
-    final active = download.active.values.toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -28,20 +26,20 @@ class LibraryScreen extends StatelessWidget {
         Row(
           children: [
             const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bibliothèque',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Outfit',
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                ],
+              child: Text(
+                'Bibliothèque',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Outfit',
+                ),
               ),
+            ),
+            IconButton(
+              onPressed: () => showUpdateSheet(context),
+              tooltip: 'Mise à jour',
+              icon: const Icon(Icons.update_rounded,
+                  color: AppColors.textSecondary, size: 26),
             ),
             if (tracks.isNotEmpty)
               IconButton(
@@ -60,11 +58,7 @@ class LibraryScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        if (active.isNotEmpty) ...[
-          const _SectionTitle(title: 'Téléchargements en cours'),
-          for (final p in active) _ActiveDownloadTile(progress: p),
-          const SizedBox(height: 8),
-        ],
+        const DownloadProgressPanel(),
 
         if (tracks.isNotEmpty) ...[
           const _SectionTitle(title: 'Mes sons'),
@@ -72,17 +66,16 @@ class LibraryScreen extends StatelessWidget {
             _LibraryTile(
               track: tracks[i],
               index: i,
-              isPlaying: playerOf(context).current?.id == tracks[i].id,
+              isPlaying:
+                  context.read<PlayerService>().current?.id == tracks[i].id,
               onPlay: () => _play(context, tracks, i),
               onDelete: () => _delete(context, tracks[i]),
             ),
-        ] else if (active.isEmpty)
+        ] else
           const _EmptyLibrary(),
       ],
     );
   }
-
-  PlayerService playerOf(BuildContext context) => context.read<PlayerService>();
 
   Future<void> _playAll(BuildContext context, List<LibraryTrack> tracks) async {
     final player = context.read<PlayerService>();
@@ -160,70 +153,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _ActiveDownloadTile extends StatelessWidget {
-  final DownloadProgress progress;
-
-  const _ActiveDownloadTile({required this.progress});
-
-  @override
-  Widget build(BuildContext context) {
-    final fraction = progress.fraction;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              color: AppColors.secondary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Téléchargement en cours…',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(
-                  value: fraction,
-                  minHeight: 4,
-                  borderRadius: BorderRadius.circular(2),
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
-                  valueColor:
-                      const AlwaysStoppedAnimation(AppColors.secondary),
-                ),
-              ],
-            ),
-          ),
-          if (progress.totalBytes > 0) ...[
-            const SizedBox(width: 12),
-            Text(
-              '${formatBytes(progress.receivedBytes)} / ${formatBytes(progress.totalBytes)}',
-              style: const TextStyle(
-                  fontSize: 11, color: AppColors.textSecondary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _LibraryTile extends StatelessWidget {
   final LibraryTrack track;
   final int index;
@@ -267,8 +196,7 @@ class _LibraryTile extends StatelessWidget {
                         ? Image.file(
                             thumbPath,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                const _ThumbFallback(),
+                            errorBuilder: (_, _, _) => const _ThumbFallback(),
                           )
                         : CachedNetworkImage(
                             imageUrl: track.thumbnailUrl,

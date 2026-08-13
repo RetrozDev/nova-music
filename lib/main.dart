@@ -7,6 +7,7 @@ import 'src/screens/home_screen.dart';
 import 'src/services/download_service.dart';
 import 'src/services/library_service.dart';
 import 'src/services/player_service.dart';
+import 'src/services/update_service.dart';
 import 'src/services/youtube_service.dart';
 import 'src/theme/app_theme.dart';
 
@@ -31,6 +32,7 @@ Future<void> main() async {
   await library.init();
   final download = DownloadService(youtube, library);
   final player = PlayerService(youtube, library);
+  final updater = UpdateService();
 
   runApp(
     MultiProvider(
@@ -39,6 +41,7 @@ Future<void> main() async {
         ChangeNotifierProvider.value(value: download),
         ChangeNotifierProvider.value(value: player),
         Provider<YoutubeService>.value(value: youtube),
+        Provider<UpdateService>.value(value: updater),
       ],
       child: const NovaMusicApp(),
     ),

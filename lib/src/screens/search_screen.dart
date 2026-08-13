@@ -10,6 +10,7 @@ import '../services/library_service.dart';
 import '../services/player_service.dart';
 import '../services/youtube_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/download_progress_panel.dart';
 import '../widgets/track_card.dart';
 
 const _categories = [
@@ -204,7 +205,14 @@ class _SearchScreenState extends State<SearchScreen> {
             ],
           ),
         ),
-        Expanded(child: _buildBody()),
+        Expanded(
+          child: Column(
+            children: [
+              const DownloadProgressPanel(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
+        ),
       ],
     );
   }

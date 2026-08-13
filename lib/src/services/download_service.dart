@@ -9,30 +9,33 @@ import '../models/track.dart';
 import 'library_service.dart';
 import 'youtube_service.dart';
 
-class DownloadProgress {
-  final String id;
+class ActiveDownload {
+  final Track track;
   final int receivedBytes;
   final int totalBytes;
+  final double speedBytesPerSec;
 
-  const DownloadProgress({
-    required this.id,
+  const ActiveDownload({
+    required this.track,
     required this.receivedBytes,
     required this.totalBytes,
+    this.speedBytesPerSec = 0,
   });
 
-  double? get fraction =>
-      totalBytes > 0 ? (receivedBytes / totalBytes).clamp(0.0, 1.0) : null;
+  double? get fraction => totalBytes > 0
+      ? (receivedBytes / totalBytes).clamp(0.0, 1.0)
+      : null;
 }
 
 class DownloadService extends ChangeNotifier {
   final YoutubeService _yt;
   final LibraryService _library;
 
-  final Map<String, DownloadProgress> _active = {};
+  final Map<String, ActiveDownload> _active = {};
 
   DownloadService(this._yt, this._library);
 
-  Map<String, DownloadProgress> get active => Map.unmodifiable(_active);
+  Map<String, ActiveDownload> get active => Map.unmodifiable(_active);
 
   bool isDownloading(String id) => _active.containsKey(id);
 
@@ -40,7 +43,11 @@ class DownloadService extends ChangeNotifier {
     final id = track.id;
     if (_active.containsKey(id) || _library.isDownloaded(id)) return;
 
-    _active[id] = DownloadProgress(id: id, receivedBytes: 0, totalBytes: 0);
+    _active[id] = ActiveDownload(
+      track: track,
+      receivedBytes: 0,
+      totalBytes: 0,
+    );
     notifyListeners();
 
     try {
@@ -49,15 +56,31 @@ class DownloadService extends ChangeNotifier {
       final filePath = p.join(_library.musicDir, fileName);
       final file = File(filePath);
       final sink = file.openWrite();
+
       var received = 0;
+      var lastBytes = 0;
+      var lastTick = DateTime.now();
+      var ema = 0.0;
+
       try {
         await for (final chunk in result.stream) {
           received += chunk.length;
           sink.add(chunk);
-          _active[id] = DownloadProgress(
-            id: id,
+
+          final now = DateTime.now();
+          final dt = now.difference(lastTick).inMilliseconds;
+          if (dt >= 120) {
+            final instant = (received - lastBytes) * 1000 / dt;
+            ema = ema == 0 ? instant : ema * 0.6 + instant * 0.4;
+            lastBytes = received;
+            lastTick = now;
+          }
+
+          _active[id] = ActiveDownload(
+            track: track,
             receivedBytes: received,
             totalBytes: result.sizeBytes,
+            speedBytesPerSec: ema,
           );
           notifyListeners();
         }
