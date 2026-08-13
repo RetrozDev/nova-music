@@ -21,12 +21,7 @@ class AppUpdate {
   String get version => tag.replaceFirst(RegExp(r'^[vV]'), '');
 }
 
-class UpdateResult {
-  final bool installed;
-  final String? message;
-
-  const UpdateResult(this.installed, this.message);
-}
+enum InstallOutcome { installed, permissionRequired, failed }
 
 /// Vérifie et installe les nouvelles versions publiées sur GitHub Releases.
 class UpdateService {
@@ -91,24 +86,27 @@ class UpdateService {
     return false;
   }
 
-  Future<UpdateResult> downloadAndInstall(
+  /// Télécharge l'APK de la mise à jour. Retourne le chemin du fichier,
+  /// ou `null` en cas d'échec.
+  Future<String?> downloadApk(
     AppUpdate update, {
     void Function(double fraction, int received, int total)? onProgress,
   }) async {
     try {
       final ext = await getExternalStorageDirectory();
-      if (ext == null) {
-        return const UpdateResult(false, 'Stockage externe indisponible.');
-      }
+      if (ext == null) return null;
       final dir = p.join(ext.path, 'updates');
       final filePath = p.join(dir, 'nova-music.apk');
       await Directory(dir).create(recursive: true);
+      if (await File(filePath).exists()) {
+        try {
+          await File(filePath).delete();
+        } catch (_) {}
+      }
 
       final request = http.Request('GET', Uri.parse(update.downloadUrl));
       final response = await http.Client().send(request);
-      if (response.statusCode != 200) {
-        return UpdateResult(false, 'Téléchargement impossible (code ${response.statusCode}).');
-      }
+      if (response.statusCode != 200) return null;
 
       final total = response.contentLength ?? 0;
       var received = 0;
@@ -120,24 +118,30 @@ class UpdateService {
           onProgress?.call(total > 0 ? received / total : 0, received, total);
         }
         await sink.close();
-      } catch (e) {
+      } catch (_) {
         await sink.close();
-        return UpdateResult(false, 'Téléchargement interrompu.');
+        try {
+          await File(filePath).delete();
+        } catch (_) {}
+        return null;
       }
-
-      final ok = await installApk(filePath);
-      if (!ok) {
-        return const UpdateResult(false, 'Impossible de lancer l\'installation.');
-      }
-      return const UpdateResult(true, null);
-    } catch (e) {
-      return UpdateResult(false, e.toString());
+      return filePath;
+    } catch (_) {
+      return null;
     }
   }
 
-  Future<bool> installApk(String path) async {
-    final ok = await _channel.invokeMethod<bool>('installApk', path);
-    return ok ?? false;
+  /// Lance l'installateur Android. Retourne le résultat précis.
+  Future<InstallOutcome> installApk(String path) async {
+    try {
+      final ok = await _channel.invokeMethod<bool>('installApk', path);
+      return ok == true ? InstallOutcome.installed : InstallOutcome.failed;
+    } on PlatformException catch (e) {
+      if (e.code == 'install_permission_required') {
+        return InstallOutcome.permissionRequired;
+      }
+      return InstallOutcome.failed;
+    }
   }
 
   Future<void> openInstallSettings() async {

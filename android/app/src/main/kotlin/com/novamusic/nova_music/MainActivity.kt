@@ -22,6 +22,18 @@ class MainActivity : AudioServiceActivity() {
                             result.error("bad_args", "Chemin APK manquant", null)
                             return@setMethodCallHandler
                         }
+                        // Android 8+ exige l'autorisation « Installer des apps
+                        // inconnues » pour lancer l'installation par ACTION_VIEW.
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                            !packageManager.canRequestPackageInstalls()
+                        ) {
+                            result.error(
+                                "install_permission_required",
+                                "Autorisez l'installation d'applications inconnues",
+                                null
+                            )
+                            return@setMethodCallHandler
+                        }
                         try {
                             val file = File(path)
                             if (!file.exists()) {

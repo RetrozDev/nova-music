@@ -104,7 +104,7 @@ Future<bool> showUpdateProgressDialog(
     ),
   );
 
-  final result = await service.downloadAndInstall(
+  final path = await service.downloadApk(
     update,
     onProgress: (fraction, received, total) {
       progress.value = fraction;
@@ -119,7 +119,57 @@ Future<bool> showUpdateProgressDialog(
   if (navigator.mounted) navigator.pop();
   if (!context.mounted) return false;
 
-  if (result.installed) {
+  if (path == null) {
+    await showUpdateErrorDialog(
+        context, service, 'Téléchargement de la mise à jour impossible.');
+    return false;
+  }
+
+  var outcome = await service.installApk(path);
+  while (outcome == InstallOutcome.permissionRequired) {
+    if (!context.mounted) return false;
+    // Ouvre les réglages « sources inconnues », puis propose de réessayer.
+    await service.openInstallSettings();
+    if (!context.mounted) return false;
+    final retry = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.security_rounded,
+            color: Colors.amber, size: 36),
+        title: Text(
+          'Autorisation d\'installation requise',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'Pour installer Nova Music, autorise « Installer des applications '
+          'inconnues » pour l\'app dans les réglages qui viennent de '
+          's\'ouvrir. Puis reviens et touche « Réessayer ».',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Plus tard'),
+          ),
+          FilledButton(
+            style:
+                FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Réessayer'),
+          ),
+        ],
+      ),
+    );
+    if (retry != true || !context.mounted) return false;
+    outcome = await service.installApk(path);
+  }
+
+  if (outcome == InstallOutcome.installed) {
+    if (!context.mounted) return false;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -150,7 +200,9 @@ Future<bool> showUpdateProgressDialog(
     return true;
   }
 
-  await showUpdateErrorDialog(context, service, result.message);
+  if (!context.mounted) return false;
+  await showUpdateErrorDialog(
+      context, service, 'Impossible de lancer l\'installation.');
   return false;
 }
 
